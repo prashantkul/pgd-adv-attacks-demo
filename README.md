@@ -1,6 +1,6 @@
 # PGD Attack Demo - Educational Adversarial Machine Learning
 
-[![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
+[![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
 [![PyTorch](https://img.shields.io/badge/PyTorch-2.0+-red.svg)](https://pytorch.org/)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
@@ -76,11 +76,14 @@ jupyter lab
 jupyter notebook
 ```
 
-Open the notebooks in order:
-1. `01_pgd_introduction.ipynb` - Theory and concepts
-2. `02_pgd_implementation.ipynb` - Step-by-step implementation
-3. `03_pgd_experiments.ipynb` - Parameter analysis
-4. `04_pgd_analysis.ipynb` - Advanced analysis
+**📚 Educational Notebooks (with Colab support):**
+1. `00_norms_demo.ipynb` - Interactive L0, L2, L∞ norms visualization
+2. `01_pgd_introduction.ipynb` - Theory and concepts
+3. `02_pgd_implementation.ipynb` - Step-by-step implementation
+4. `03_pgd_experiments.ipynb` - Parameter analysis
+5. `04_pgd_analysis.ipynb` - Advanced analysis
+
+Each notebook has a "Open in Colab" button at the top for instant cloud execution!
 
 ## 📁 Project Structure
 
