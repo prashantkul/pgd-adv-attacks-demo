@@ -1,0 +1,71 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual environments
+venv/
+ENV/
+env/
+.venv
+
+# Jupyter Notebook
+.ipynb_checkpoints
+*.ipynb_checkpoints/
+
+# Data files (too large)
+data/cifar-10-batches-py/
+data/cifar-10-python.tar.gz
+data/*.tar.gz
+data/*.zip
+
+# Model checkpoints
+models/*.pth
+models/*.pt
+models/*.ckpt
+
+# Results (can be regenerated)
+results/logs/
+results/figures/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Environment files (user-specific)
+.env
+
+# Temporary files
+*.tmp
+*.bak
+*.backup
+*.log
+
+# Keep directory structure
+!data/.gitkeep
+!models/.gitkeep
+!results/.gitkeep

@@ -1,0 +1,753 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Understanding Norms and Projection in PGD Attacks</title>
+    <style>
+        @media print {
+            body {
+                margin: 0;
+                padding: 20mm;
+            }
+            .page-break {
+                page-break-after: always;
+            }
+            h1 {
+                page-break-before: auto;
+            }
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        
+        .container {
+            background: white;
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        h1 {
+            color: #2c3e50;
+            border-bottom: 3px solid #3498db;
+            padding-bottom: 10px;
+            margin-top: 40px;
+        }
+        
+        h2 {
+            color: #34495e;
+            margin-top: 30px;
+            border-left: 4px solid #3498db;
+            padding-left: 10px;
+        }
+        
+        h3 {
+            color: #555;
+            margin-top: 20px;
+        }
+        
+        .code-block {
+            background: #f8f8f8;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 15px;
+            margin: 15px 0;
+            font-family: 'Courier New', monospace;
+            overflow-x: auto;
+        }
+        
+        .highlight {
+            background: #fff3cd;
+            padding: 15px;
+            border-left: 4px solid #ffc107;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+        
+        .comparison-box {
+            background: #e8f4f8;
+            border: 2px solid #3498db;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 20px 0;
+        }
+        
+        .norm-example {
+            background: #f0f8ff;
+            border: 1px solid #b0d4ff;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 5px;
+        }
+        
+        .key-point {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            border-radius: 5px;
+            padding: 10px 15px;
+            margin: 15px 0;
+        }
+        
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 20px 0;
+        }
+        
+        th, td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: left;
+        }
+        
+        th {
+            background: #3498db;
+            color: white;
+        }
+        
+        tr:nth-child(even) {
+            background: #f9f9f9;
+        }
+        
+        .visual-example {
+            background: white;
+            border: 2px dashed #999;
+            padding: 20px;
+            margin: 20px 0;
+            text-align: center;
+            font-family: monospace;
+        }
+        
+        .title-page {
+            text-align: center;
+            padding: 100px 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 10px;
+            margin-bottom: 40px;
+        }
+        
+        .title-page h1 {
+            border: none;
+            color: white;
+            font-size: 2.5em;
+            margin-bottom: 20px;
+        }
+        
+        .subtitle {
+            font-size: 1.3em;
+            opacity: 0.9;
+        }
+        
+        .toc {
+            background: #f9f9f9;
+            border: 1px solid #ddd;
+            padding: 20px;
+            margin: 30px 0;
+            border-radius: 5px;
+        }
+        
+        .toc h2 {
+            margin-top: 0;
+            border: none;
+            padding: 0;
+        }
+        
+        .toc ul {
+            list-style-type: none;
+            padding-left: 0;
+        }
+        
+        .toc li {
+            margin: 10px 0;
+            padding-left: 20px;
+        }
+        
+        .toc li:before {
+            content: "▸ ";
+            color: #3498db;
+            font-weight: bold;
+            margin-left: -20px;
+            padding-right: 10px;
+        }
+        
+        @media print {
+            .title-page {
+                background: none;
+                color: black;
+                border: 2px solid #333;
+            }
+            .title-page h1 {
+                color: black;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="title-page">
+            <h1>Understanding Norms and Projection in PGD Attacks</h1>
+            <p class="subtitle">A Comprehensive Guide to Mathematical Foundations of Adversarial Machine Learning</p>
+            <p style="margin-top: 40px; opacity: 0.8;">Complete Reference Document</p>
+        </div>
+
+        <div class="toc">
+            <h2>Table of Contents</h2>
+            <ul>
+                <li>Part 1: Understanding "Projection" in PGD</li>
+                <li>Part 2: Mathematical Norms Explained</li>
+                <li>Part 3: Comparing L₀, L₂, and L∞ Norms</li>
+                <li>Part 4: Practical Implementation</li>
+                <li>Part 5: Key Takeaways and Quick Reference</li>
+            </ul>
+        </div>
+
+        <div class="page-break"></div>
+
+        <h1>Part 1: Understanding "Projection" in Projected Gradient Descent</h1>
+
+        <div class="highlight">
+            <strong>Key Concept:</strong> "Projection" in PGD refers to mapping a point back onto a constrained set (the epsilon ball) after taking a gradient step that may have moved outside the allowed region.
+        </div>
+
+        <h2>What Does "Projected" Mean?</h2>
+
+        <p>In Projected Gradient Descent, "projection" is the operation that ensures our adversarial perturbation stays within allowed bounds. Think of it as a safety mechanism that prevents the attack from creating unrealistic examples.</p>
+
+        <div class="comparison-box">
+            <h3>Visual Intuition: Walking in a Circular Park</h3>
+            <ol>
+                <li>You take a step in some direction (gradient step)</li>
+                <li>Your step takes you outside the park boundary</li>
+                <li>You need to get back into the park by walking to the <strong>nearest point on the fence</strong> (projection)</li>
+            </ol>
+        </div>
+
+        <h2>Why Projection is Necessary</h2>
+
+        <h3>Without Projection - Unconstrained</h3>
+        <div class="code-block">
+# WITHOUT projection - perturbation can grow infinitely!
+x_adv = x_original
+for i in range(iterations):
+    gradient = compute_gradient(x_adv)
+    x_adv = x_adv + alpha * sign(gradient)
+    # Problem: x_adv drifts arbitrarily far from x_original!
+        </div>
+
+        <h3>With Projection - Constrained</h3>
+        <div class="code-block">
+# WITH projection - constrained to epsilon ball
+x_adv = x_original + random_noise
+for i in range(iterations):
+    gradient = compute_gradient(x_adv)
+    x_adv = x_adv + alpha * sign(gradient)
+    
+    # PROJECT back to epsilon ball
+    x_adv = project_to_epsilon_ball(x_adv, x_original, epsilon)
+        </div>
+
+        <h2>How L∞ Projection Works</h2>
+
+        <p>For the L∞ norm (most common in adversarial attacks), projection is simply <strong>clipping</strong>:</p>
+
+        <div class="code-block">
+def project_l_infinity(x_adv, x_original, epsilon):
+    """
+    Project x_adv back into L∞ ball around x_original
+    Constraint: ||x_adv - x_original||∞ ≤ ε
+    """
+    # Calculate perturbation
+    delta = x_adv - x_original
+    
+    # Clip each dimension to [-epsilon, epsilon]
+    delta_projected = torch.clamp(delta, min=-epsilon, max=epsilon)
+    
+    # Add back to original
+    x_projected = x_original + delta_projected
+    
+    return x_projected
+        </div>
+
+        <h2>Concrete Example: Single Pixel Projection</h2>
+
+        <div class="norm-example">
+            <h3>Step-by-Step Projection</h3>
+            <div class="code-block">
+# Original pixel value
+original_pixel = 100
+
+# After gradient step, pixel wants to be at 115
+after_gradient_step = 115
+
+# But epsilon = 8, so allowed range is [92, 108]
+epsilon = 8
+min_allowed = 92
+max_allowed = 108
+
+# PROJECTION: Clip 115 to [92, 108]
+projected_pixel = min(max(115, 92), 108) = 108
+# Projected back to boundary!
+            </div>
+        </div>
+
+        <h2>Projection During PGD Iterations</h2>
+
+        <div class="visual-example">
+Iteration 1: Take step → Outside ball → Project back
+    Before: ●········ (at x)
+    Step:   ·········● (outside epsilon ball)
+    Project: ······●·· (back on boundary)
+
+Iteration 2: Take step → Outside ball → Project back  
+    Before: ······●··
+    Step:   ·········● (tries to go further)
+    Project: ·······●· (constrained to boundary)
+
+Iteration 3: Take step → Still outside → Stay on boundary
+    Before: ·······●·
+    Step:   ··········● (wants to escape)
+    Project: ·······●· (stuck at boundary)
+        </div>
+
+        <div class="page-break"></div>
+
+        <h1>Part 2: Mathematical Norms Explained</h1>
+
+        <div class="highlight">
+            <strong>Core Concept:</strong> A norm is a mathematical way to measure the "size" or "length" of a vector. Different norms emphasize different aspects of the measurement.
+        </div>
+
+        <h2>What is a Norm?</h2>
+
+        <p>Think of norms as different ways to measure distance - like how you can measure the distance between two cities "as the crow flies" (straight line) or by driving distance (following roads).</p>
+
+        <h2>The Three Main Norms in Adversarial ML</h2>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Norm</th>
+                    <th>What it Measures</th>
+                    <th>Formula</th>
+                    <th>Adversarial Meaning</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>L₀</strong></td>
+                    <td>Number of non-zero elements</td>
+                    <td>Count(x ≠ 0)</td>
+                    <td>Change at most k pixels by any amount</td>
+                </tr>
+                <tr>
+                    <td><strong>L₂</strong></td>
+                    <td>Euclidean distance</td>
+                    <td>√(Σx²)</td>
+                    <td>Total change energy is limited</td>
+                </tr>
+                <tr>
+                    <td><strong>L∞</strong></td>
+                    <td>Maximum absolute value</td>
+                    <td>max(|x|)</td>
+                    <td>No pixel changes by more than ε</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h2>Visual Comparison of Norm Balls</h2>
+
+        <div class="visual-example">
+     L₁ Ball (Diamond)        L₂ Ball (Circle)         L∞ Ball (Square)
+           *                        * * *                  * * * * *
+         * * *                    * * * * *                * * * * *
+       * * * * *                * * * * * * *              * * * * *
+         * * *                    * * * * *                * * * * *
+           *                        * * *                  * * * * *
+        </div>
+
+        <h2>Mathematical Properties</h2>
+
+        <div class="code-block">
+import numpy as np
+
+def compute_norms(vector):
+    """Compute all common norms"""
+    vector = np.array(vector)
+    
+    # L0: Count non-zeros
+    l0 = np.count_nonzero(vector)
+    
+    # L1: Sum of absolutes
+    l1 = np.sum(np.abs(vector))
+    
+    # L2: Square root of sum of squares
+    l2 = np.sqrt(np.sum(vector ** 2))
+    
+    # L∞: Maximum absolute value
+    linf = np.max(np.abs(vector))
+    
+    return {'L0': l0, 'L1': l1, 'L2': l2, 'L∞': linf}
+        </div>
+
+        <div class="key-point">
+            <strong>Norm Relationship:</strong> For any vector x with n dimensions:<br>
+            ||x||∞ ≤ ||x||₂ ≤ ||x||₁ ≤ √n · ||x||₂ ≤ n · ||x||∞
+        </div>
+
+        <div class="page-break"></div>
+
+        <h1>Part 3: Comparing L₀, L₂, and L∞ Norms</h1>
+
+        <h2>Simple Explanations</h2>
+
+        <div class="comparison-box">
+            <h3>L₀ Norm: "The Counter"</h3>
+            <p><strong>Counts HOW MANY changes, ignores how big</strong></p>
+            <div class="code-block">
+original =     [100, 100, 100, 100]
+adversarial =  [100, 255, 100, 101]  
+perturbation = [  0, 155,   0,   1]
+
+L0 = 2  # TWO pixels changed (magnitude doesn't matter)
+            </div>
+            <p><strong>Real-world analogy:</strong> Counting how many items in your room you moved, regardless of distance</p>
+        </div>
+
+        <div class="comparison-box">
+            <h3>L₂ Norm: "The Distance Measurer"</h3>
+            <p><strong>Measures total distance/energy (Pythagorean theorem)</strong></p>
+            <div class="code-block">
+perturbation = [3, 4, 0, 0]
+
+L2 = sqrt(3² + 4²) = sqrt(25) = 5
+# It's the straight-line distance
+            </div>
+            <p><strong>Real-world analogy:</strong> The "as the crow flies" distance between two points</p>
+        </div>
+
+        <div class="comparison-box">
+            <h3>L∞ Norm: "The Maximum Finder"</h3>
+            <p><strong>Finds the BIGGEST single change</strong></p>
+            <div class="code-block">
+perturbation = [2, -8, 5, 1]
+
+L∞ = 8  # The biggest absolute change
+            </div>
+            <p><strong>Real-world analogy:</strong> Like the loudest person in a room - only the maximum matters</p>
+        </div>
+
+        <h2>Side-by-Side Comparison</h2>
+
+        <div class="norm-example">
+            <h3>Same Perturbation, Three Measurements</h3>
+            <div class="code-block">
+perturbation = [0, 10, -3, 0, 5]
+
+L0_norm = 3     # THREE non-zero values
+L2_norm = 11.4  # sqrt(100 + 9 + 25) ≈ 11.4  
+L∞_norm = 10    # Maximum absolute value
+            </div>
+        </div>
+
+        <h2>Image Attack Examples</h2>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Attack Type</th>
+                    <th>Characteristic</th>
+                    <th>Example</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>L₀ Attack</strong></td>
+                    <td>Few but Strong Changes</td>
+                    <td>Change 5 pixels from 50 to 255</td>
+                </tr>
+                <tr>
+                    <td><strong>L₂ Attack</strong></td>
+                    <td>Spread the Energy</td>
+                    <td>Change all pixels by small amounts</td>
+                </tr>
+                <tr>
+                    <td><strong>L∞ Attack</strong></td>
+                    <td>Uniform Limit</td>
+                    <td>Each pixel changes by at most ε</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h2>Memory Tricks</h2>
+
+        <div class="key-point">
+            <ul style="list-style-type: none; padding-left: 0;">
+                <li><strong>L₀ = "L-Zero = Count Zeros"</strong> - Counts what's NOT zero</li>
+                <li><strong>L₂ = "L-Two = Straight To"</strong> - Straight-line distance</li>
+                <li><strong>L∞ = "L-Infinity = Maximum Intensity"</strong> - Finds the maximum</li>
+            </ul>
+        </div>
+
+        <div class="page-break"></div>
+
+        <h1>Part 4: Practical Implementation</h1>
+
+        <h2>Projection Functions for Different Norms</h2>
+
+        <div class="code-block">
+class NormBall:
+    """Constraint regions for different norms"""
+    
+    @staticmethod
+    def project_l0(perturbation, k):
+        """Keep only k largest perturbations"""
+        flat = perturbation.flatten()
+        indices = torch.abs(flat).argsort(descending=True)[:k]
+        mask = torch.zeros_like(flat)
+        mask[indices] = 1
+        return perturbation * mask.reshape(perturbation.shape)
+    
+    @staticmethod
+    def project_l2(perturbation, epsilon):
+        """Scale to L2 ball if needed"""
+        norm = torch.norm(perturbation, p=2)
+        if norm > epsilon:
+            perturbation = perturbation * (epsilon / norm)
+        return perturbation
+    
+    @staticmethod
+    def project_linf(perturbation, epsilon):
+        """Clip to L∞ ball"""
+        return torch.clamp(perturbation, -epsilon, epsilon)
+        </div>
+
+        <h2>Complete PGD Implementation with Projection</h2>
+
+        <div class="code-block">
+def pgd_attack(model, images, labels, epsilon=8/255, alpha=2/255, 
+               iterations=20, norm='linf'):
+    """
+    PGD attack with projection for different norms
+    """
+    # Random initialization
+    delta = torch.zeros_like(images).uniform_(-epsilon, epsilon)
+    
+    for i in range(iterations):
+        delta.requires_grad = True
+        
+        # Forward pass
+        outputs = model(images + delta)
+        loss = F.cross_entropy(outputs, labels)
+        
+        # Backward pass
+        loss.backward()
+        
+        # Update with gradient sign
+        delta = delta + alpha * delta.grad.sign()
+        
+        # Project back to norm ball
+        if norm == 'linf':
+            delta = torch.clamp(delta, -epsilon, epsilon)
+        elif norm == 'l2':
+            norm_val = torch.norm(delta.view(delta.shape[0], -1), p=2, dim=1)
+            delta = delta * torch.min(epsilon / norm_val, torch.ones_like(norm_val)).view(-1, 1, 1, 1)
+        elif norm == 'l0':
+            # Keep only top k values
+            k = int(epsilon * delta.numel())
+            topk = torch.topk(delta.abs().flatten(), k)
+            mask = torch.zeros_like(delta.flatten())
+            mask[topk.indices] = 1
+            delta = delta * mask.reshape(delta.shape)
+        
+        # Ensure valid image range
+        delta = torch.clamp(images + delta, 0, 1) - images
+        delta = delta.detach()
+    
+    return images + delta
+        </div>
+
+        <h2>Choosing the Right Norm</h2>
+
+        <div class="code-block">
+def choose_norm_for_scenario(scenario):
+    """Guide for selecting appropriate norm"""
+    
+    norm_guide = {
+        "imperceptible_changes": "L∞",  # Each pixel changes slightly
+        "few_pixel_attack": "L₀",       # Change only critical pixels
+        "natural_perturbation": "L₂",   # Smooth, energy-based
+        "physical_world_attack": "L₀",  # Stickers/patches
+        "benchmark_evaluation": "L∞",   # Standard in literature
+    }
+    
+    return norm_guide.get(scenario, "L∞")
+        </div>
+
+        <div class="page-break"></div>
+
+        <h1>Part 5: Key Takeaways and Quick Reference</h1>
+
+        <h2>Quick Reference Card</h2>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Concept</th>
+                    <th>L₀</th>
+                    <th>L₂</th>
+                    <th>L∞</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>Measures</strong></td>
+                    <td>Count of changes</td>
+                    <td>Total energy</td>
+                    <td>Maximum change</td>
+                </tr>
+                <tr>
+                    <td><strong>Shape</strong></td>
+                    <td>Sparse points</td>
+                    <td>Hypersphere</td>
+                    <td>Hypercube</td>
+                </tr>
+                <tr>
+                    <td><strong>Projection</strong></td>
+                    <td>Keep top-k</td>
+                    <td>Scale vector</td>
+                    <td>Clip values</td>
+                </tr>
+                <tr>
+                    <td><strong>Use Case</strong></td>
+                    <td>Physical patches</td>
+                    <td>Natural noise</td>
+                    <td>Digital attacks</td>
+                </tr>
+                <tr>
+                    <td><strong>Complexity</strong></td>
+                    <td>O(n log n)</td>
+                    <td>O(n)</td>
+                    <td>O(n)</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h2>Essential Formulas</h2>
+
+        <div class="highlight">
+            <ul style="list-style-type: none; padding-left: 0;">
+                <li><strong>L₀:</strong> ||x||₀ = |{i : xᵢ ≠ 0}|</li>
+                <li><strong>L₂:</strong> ||x||₂ = √(Σᵢ xᵢ²)</li>
+                <li><strong>L∞:</strong> ||x||∞ = maxᵢ |xᵢ|</li>
+            </ul>
+        </div>
+
+        <h2>PGD Algorithm Summary</h2>
+
+        <div class="key-point">
+            <ol>
+                <li><strong>Initialize:</strong> Start with random perturbation in epsilon ball</li>
+                <li><strong>Compute Gradient:</strong> Find direction to increase loss</li>
+                <li><strong>Take Step:</strong> Move in gradient direction by step size α</li>
+                <li><strong>Project:</strong> Map back to epsilon ball if outside</li>
+                <li><strong>Repeat:</strong> Iterate for k steps</li>
+            </ol>
+        </div>
+
+        <h2>Why Projection Matters</h2>
+
+        <div class="comparison-box">
+            <ul>
+                <li><strong>Ensures Imperceptibility:</strong> Keeps changes small enough to be unnoticeable</li>
+                <li><strong>Defines Threat Model:</strong> Specifies what kind of attacks we're defending against</li>
+                <li><strong>Enables Iteration:</strong> Allows multiple refinement steps without diverging</li>
+                <li><strong>Maintains Validity:</strong> Ensures adversarial examples are realistic</li>
+            </ul>
+        </div>
+
+        <h2>Common Epsilon Values</h2>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Dataset</th>
+                    <th>L∞ Epsilon</th>
+                    <th>Pixel Scale</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>MNIST</td>
+                    <td>0.3</td>
+                    <td>[0, 1]</td>
+                </tr>
+                <tr>
+                    <td>CIFAR-10</td>
+                    <td>8/255</td>
+                    <td>[0, 255]</td>
+                </tr>
+                <tr>
+                    <td>ImageNet</td>
+                    <td>4/255</td>
+                    <td>[0, 255]</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h2>Final Summary</h2>
+
+        <div class="highlight">
+            <p><strong>Remember:</strong></p>
+            <ul>
+                <li><strong>Projection</strong> = Constraining to allowed perturbation space</li>
+                <li><strong>L₀</strong> = "I can change FEW things by A LOT"</li>
+                <li><strong>L₂</strong> = "I have total ENERGY BUDGET to spread"</li>
+                <li><strong>L∞</strong> = "NOTHING can change by more than ε"</li>
+            </ul>
+        </div>
+
+        <div style="margin-top: 50px; text-align: center; padding: 20px; background: #f0f0f0; border-radius: 5px;">
+            <p><strong>End of Document</strong></p>
+            <p>Understanding these concepts provides the mathematical foundation for adversarial machine learning research and defense.</p>
+        </div>
+    </div>
+
+    <script>
+        // Add print button functionality
+        function printDocument() {
+            window.print();
+        }
+        
+        // Optional: Add a floating print button
+        if (typeof document !== 'undefined') {
+            const printBtn = document.createElement('button');
+            printBtn.innerHTML = '🖨️ Print/Save as PDF';
+            printBtn.style.cssText = `
+                position: fixed;
+                bottom: 20px;
+                right: 20px;
+                padding: 10px 20px;
+                background: #3498db;
+                color: white;
+                border: none;
+                border-radius: 5px;
+                cursor: pointer;
+                font-size: 16px;
+                box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+                z-index: 1000;
+            `;
+            printBtn.onclick = printDocument;
+            document.body.appendChild(printBtn);
+        }
+    </script>
+</body>
+</html>
